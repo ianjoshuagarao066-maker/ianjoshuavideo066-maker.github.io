@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D I LOVE YOU Heart</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+}
+
+canvas{
+    display:block;
+}
+</style>
+</head>
+<body>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js';
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth/window.innerHeight,
+    0.1,
+    2000
+);
+
+camera.position.set(0,0,160);
+
+const renderer = new THREE.WebGLRenderer({
+    antialias:true
+});
+
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+
+// ===== STAR FIELD =====
+
+const starsGeometry = new THREE.BufferGeometry();
+const starsVertices = [];
+
+for(let i=0;i<3000;i++){
+    starsVertices.push(
+        (Math.random()-0.5)*2000,
+        (Math.random()-0.5)*2000,
+        (Math.random()-0.5)*2000
+    );
+}
+
+starsGeometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(starsVertices,3)
+);
+
+const starsMaterial = new THREE.PointsMaterial({
+    color:0xffffff,
+    size:2
+});
+
+const stars = new THREE.Points(
+    starsGeometry,
+    starsMaterial
+);
+
+scene.add(stars);
+
+// ===== TEXT SPRITE =====
+
+function createTextSprite(text){
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = 512;
+    canvas.height = 128;
+
+    ctx.font = 'bold 60px Arial';
+    ctx.fillStyle = '#ff0033';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ff0033';
+    ctx.shadowBlur = 25;
+
+    ctx.fillText(text,256,80);
+
+    const texture = new THREE.CanvasTexture(canvas);
+
+    const material = new THREE.SpriteMaterial({
+        map:texture,
+        transparent:true
+    });
+
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(16,4,1);
+
+    return sprite;
+}
+
+// ===== HEART =====
+
+const heartGroup = new THREE.Group();
+
+for(let i=0;i<450;i++){
+
+    const t = Math.PI*2*(i/450);
+
+    const x = 16*Math.pow(Math.sin(t),3);
+    const y = 13*Math.cos(t)
+             -5*Math.cos(2*t)
+             -2*Math.cos(3*t)
+             -Math.cos(4*t);
+
+    const z = (Math.random()-0.5)*18;
+
+    const txt = createTextSprite("I LOVE YOU");
+
+    txt.position.set(
+        x*3,
+        y*3,
+        z
+    );
+
+    heartGroup.add(txt);
+}
+
+scene.add(heartGroup);
+
+// ===== ORBIT RING =====
+
+const ringGeometry = new THREE.TorusGeometry(
+    75,
+    1.5,
+    16,
+    200
+);
+
+const ringMaterial = new THREE.MeshBasicMaterial({
+    color:0xff0033
+});
+
+const ring = new THREE.Mesh(
+    ringGeometry,
+    ringMaterial
+);
+
+ring.rotation.x = Math.PI/2.8;
+scene.add(ring);
+
+// ===== FLOATING WORDS =====
+
+const romanticWords = [
+    "lang lang",
+    "Forever",
+    "Celocia",
+    "Nicole",
+    "Love",
+    "My Heart",
+    "Always",
+    "kloy Kloy"
+];
+
+const floating = [];
+
+for(let i=0;i<60;i++){
+
+    const s = createTextSprite(
+        romanticWords[
+            Math.floor(Math.random()*romanticWords.length)
+        ]
+    );
+
+    s.position.set(
+        (Math.random()-0.5)*300,
+        (Math.random()-0.5)*180,
+        (Math.random()-0.5)*200
+    );
+
+    scene.add(s);
+    floating.push(s);
+}
+
+// ===== ANIMATION =====
+
+let time = 0;
+
+function animate(){
+
+    requestAnimationFrame(animate);
+
+    time += 0.01;
+
+    heartGroup.rotation.y += 0.004;
+
+    ring.rotation.z += 0.03;
+
+    stars.rotation.y += 0.0005;
+
+    floating.forEach((f,i)=>{
+
+        f.position.y += Math.sin(time+i)*0.03;
+        f.material.opacity =
+            0.5 + Math.sin(time*2+i)*0.5;
+    });
+
+    camera.position.x = Math.sin(time*0.3)*20;
+    camera.position.y = Math.cos(time*0.25)*10;
+
+    camera.lookAt(0,0,0);
+
+    renderer.render(scene,camera);
+}
+
+animate();
+
+window.addEventListener('resize',()=>{
+
+    camera.aspect =
+        window.innerWidth/window.innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+
+});
+</script>
+
+</body>
+</html>
